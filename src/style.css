@@ -599,7 +599,10 @@ th.th-active .sort-arrow { opacity: 1; }
 
 .cell-muted   { color: var(--muted); font-size: 0.82rem; }
 .cell-removed { text-decoration: line-through; opacity: 0.5; }
-.cell-star    { font-size: 1rem; text-align: center; }
+.cell-star    { font-size: 1rem; text-align: center; cursor: pointer; user-select: none; }
+.cell-star:hover { opacity: 0.7; }
+.cell-remove  { font-size: 0.9rem; text-align: center; cursor: pointer; color: var(--muted); user-select: none; }
+.cell-remove:hover { color: var(--forgot); }
 
 .pct-badge {
   display: inline-block;

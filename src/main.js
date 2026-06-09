@@ -239,6 +239,29 @@ function toggleStar() {
   setStarUI(entry.starred);
 }
 
+function toggleStarById(id) {
+  const entry = getSRSEntry(srs, id);
+  entry.starred = !entry.starred;
+  srs[id] = entry;
+  saveSRS(srs);
+  if (queue.length > 0 && allCards[queue[current]]?._id === id) setStarUI(entry.starred);
+}
+
+function toggleRemovedById(id) {
+  const entry = getSRSEntry(srs, id);
+  entry.removed = !entry.removed;
+  srs[id] = entry;
+  saveSRS(srs);
+  if (entry.removed) {
+    const pos = queue.indexOf(id);
+    if (pos !== -1) {
+      queue.splice(pos, 1);
+      if (current >= queue.length && current > 0) current--;
+      renderCard();
+    }
+  }
+}
+
 function showError(msg) {
   loadingEl.innerHTML = `
     <p style="color:#ef4444;font-weight:600;margin-bottom:0.5rem">Failed to load flashcards</p>
@@ -335,7 +358,7 @@ function buildVocabTable() {
     const active = vocabSortCol === c.key;
     const arrow  = active ? (vocabSortDir === 'asc' ? ' ↑' : ' ↓') : ' ↕';
     return `<th data-col="${c.key}" class="${active ? 'th-active' : ''}">${c.label}<span class="sort-arrow">${arrow}</span></th>`;
-  }).join('');
+  }).join('') + '<th>Remove</th>';
   headRow.querySelectorAll('th').forEach(th => {
     th.addEventListener('click', () => {
       if (vocabSortCol === th.dataset.col) vocabSortDir = vocabSortDir === 'asc' ? 'desc' : 'asc';
@@ -380,14 +403,15 @@ function buildVocabTable() {
       ? `<td><span class="pct-badge-new">New</span></td>`
       : `<td><span class="pct-badge" style="background:${spectrumColor(pct)}">${Math.round(pct * 100)}%</span></td>`;
     const reviewCell = `<td class="cell-muted">${totalReviews ? `${totalCorrect}/${totalReviews}` : '—'}</td>`;
-    const starCell   = `<td class="cell-star">${starred ? '★' : ''}</td>`;
+    const starCell   = `<td class="cell-star" data-action="star" data-id="${card._id}">${starred ? '★' : '☆'}</td>`;
+    const removeCell = `<td class="cell-remove" data-action="remove" data-id="${card._id}" title="${removed ? 'Restore word' : 'Remove word'}">${removed ? '↩' : '✕'}</td>`;
 
     const dataCells = cols
       .filter(c => c.key !== 'pct' && c.key !== 'reviews' && c.key !== 'starred')
       .map(c => `<td class="${removed ? 'cell-removed' : ''}">${slot(card, c.key)}</td>`)
       .join('');
 
-    return `<tr class="${removed ? 'row-removed' : ''}" style="${rowBg}">${starCell}${dataCells}${reviewCell}${pctCell}</tr>`;
+    return `<tr class="${removed ? 'row-removed' : ''}" style="${rowBg}">${starCell}${dataCells}${reviewCell}${pctCell}${removeCell}</tr>`;
   }).join('');
 }
 
@@ -403,6 +427,15 @@ function closeVocabModal() {
 document.getElementById('vocab-close').addEventListener('click', closeVocabModal);
 document.getElementById('vocab-overlay').addEventListener('click', e => {
   if (e.target === document.getElementById('vocab-overlay')) closeVocabModal();
+});
+
+document.getElementById('vocab-body').addEventListener('click', e => {
+  const td = e.target.closest('td[data-action]');
+  if (!td) return;
+  const id = parseInt(td.dataset.id, 10);
+  if (td.dataset.action === 'star')   toggleStarById(id);
+  if (td.dataset.action === 'remove') toggleRemovedById(id);
+  buildVocabTable();
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeVocabModal();
