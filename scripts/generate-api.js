@@ -5,8 +5,7 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 
-const DATA_URL    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQQa2dOfKbHmAWG7_6KSNFdtsXFlwB4YnyAsi4FaUsEH365UAgzeeXadZnjCSv7uSB9hHAVc6y4iRi2/pub?output=csv&gid=0';
-const MAPPING_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQQa2dOfKbHmAWG7_6KSNFdtsXFlwB4YnyAsi4FaUsEH365UAgzeeXadZnjCSv7uSB9hHAVc6y4iRi2/pub?output=csv&gid=1825057245';
+const DATA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQQa2dOfKbHmAWG7_6KSNFdtsXFlwB4YnyAsi4FaUsEH365UAgzeeXadZnjCSv7uSB9hHAVc6y4iRi2/pub?output=csv&gid=0';
 
 function splitCSVLine(line) {
   const result = [];
@@ -26,29 +25,32 @@ function splitCSVLine(line) {
   return result;
 }
 
-function parseCSV(text) {
+// Row 1: column headers  Row 2: slot names (front_primary, back_primary, …)  Row 3+: data
+function parseDataSheet(text) {
   const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
+  if (lines.length < 3) throw new Error('Sheet must have column headers (row 1), slot names (row 2), and at least one data row (row 3+).');
   const headers = splitCSVLine(lines[0]).map(h => h.trim().toLowerCase());
-  return lines.slice(1).map((line, i) => {
+  const slots   = splitCSVLine(lines[1]).map(s => s.trim().toLowerCase());
+  const mapping = {};
+  slots.forEach((slot, i) => { if (slot && headers[i]) mapping[slot] = headers[i]; });
+  if (!mapping.front_primary) throw new Error('Row 2 must assign a column to the front_primary slot.');
+  const cards = lines.slice(2).map((line, i) => {
     const vals = splitCSVLine(line);
-    const obj = { _id: i };
+    const obj  = { _id: i };
     headers.forEach((h, j) => { obj[h] = (vals[j] || '').trim(); });
     return obj;
   }).filter(r => Object.entries(r).some(([k, v]) => k !== '_id' && v));
+  return { mapping, cards };
 }
 
 async function main() {
-  console.log('Fetching sheets...');
-  const [dataText, mappingText] = await Promise.all([
-    fetch(DATA_URL).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status} fetching data sheet`); return r.text(); }),
-    fetch(MAPPING_URL).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status} fetching mapping sheet`); return r.text(); }),
-  ]);
+  console.log('Fetching sheet...');
+  const dataText = await fetch(DATA_URL).then(r => {
+    if (!r.ok) throw new Error(`HTTP ${r.status} fetching data sheet`);
+    return r.text();
+  });
 
-  const mapping = parseCSV(mappingText)[0];
-  if (!mapping?.front_primary) throw new Error('Mapping sheet missing front_primary column');
-
-  const rawCards = parseCSV(dataText);
+  const { mapping, cards: rawCards } = parseDataSheet(dataText);
   if (rawCards.length === 0) throw new Error('No cards found in data sheet');
 
   function slot(card, key) {
