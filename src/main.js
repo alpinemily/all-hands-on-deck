@@ -1,12 +1,13 @@
 import './style.css'
 
 // ── Config ──────────────────────────────────────────────────────────────────
-// Tab 1: content data. Tab 2: layout mapping.
-// For each URL: File → Share → Publish to web → select the tab → CSV → Publish → copy link.
-// To find a tab's gid: click the tab in Google Sheets and look at the URL: #gid=XXXXXXX
-const DATA_URL    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQQa2dOfKbHmAWG7_6KSNFdtsXFlwB4YnyAsi4FaUsEH365UAgzeeXadZnjCSv7uSB9hHAVc6y4iRi2/pub?output=csv&gid=0';
-const MAPPING_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQQa2dOfKbHmAWG7_6KSNFdtsXFlwB4YnyAsi4FaUsEH365UAgzeeXadZnjCSv7uSB9hHAVc6y4iRi2/pub?output=csv&gid=1825057245';
-const SHEET_LINK  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQQa2dOfKbHmAWG7_6KSNFdtsXFlwB4YnyAsi4FaUsEH365UAgzeeXadZnjCSv7uSB9hHAVc6y4iRi2/pubhtml';
+// Sheet format: Row 1 = column headers, Row 2 = slot names, Row 3+ = card data.
+// To use your own sheet: File → Share → Publish to web → Tab 1 → CSV → Publish,
+// then pass the base URL (everything before the ?) as ?sheet=https://…/pub
+const _base      = new URLSearchParams(window.location.search).get('sheet')
+  || 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQQa2dOfKbHmAWG7_6KSNFdtsXFlwB4YnyAsi4FaUsEH365UAgzeeXadZnjCSv7uSB9hHAVc6y4iRi2/pub';
+const DATA_URL   = _base + '?output=csv&gid=0';
+const SHEET_LINK = _base + 'html';
 
 const STORAGE_KEY    = 'flashcard_srs_data';
 const TRAD_KEY       = 'use_traditional';
@@ -66,16 +67,22 @@ function isDue(srs, id) {
 }
 
 // ── CSV parsing ──────────────────────────────────────────────────────────────
-function parseCSV(text) {
+// Row 1: column headers  Row 2: slot names (front_primary, back_primary, …)  Row 3+: data
+function parseDataSheet(text) {
   const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
+  if (lines.length < 3) throw new Error('Sheet must have column headers (row 1), slot names (row 2), and at least one data row (row 3+).');
   const headers = splitCSVLine(lines[0]).map(h => h.trim().toLowerCase());
-  return lines.slice(1).map((line, i) => {
+  const slots   = splitCSVLine(lines[1]).map(s => s.trim().toLowerCase());
+  const mapping = {};
+  slots.forEach((slot, i) => { if (slot && headers[i]) mapping[slot] = headers[i]; });
+  if (!mapping.front_primary) throw new Error('Row 2 must assign a column to the front_primary slot.');
+  const cards = lines.slice(2).map((line, i) => {
     const vals = splitCSVLine(line);
-    const obj = { _id: i };
+    const obj  = { _id: i };
     headers.forEach((h, j) => { obj[h] = (vals[j] || '').trim(); });
     return obj;
   }).filter(r => Object.entries(r).some(([k, v]) => k !== '_id' && v));
+  return { mapping, cards };
 }
 
 function splitCSVLine(line) {
@@ -329,19 +336,12 @@ function startSession() {
 async function init() {
   srs = loadSRS();
   try {
-    const [dataText, mappingText] = await Promise.all([
-      fetchCSV(DATA_URL,    'data sheet (Tab 1)'),
-      fetchCSV(MAPPING_URL, 'mapping sheet (Tab 2)'),
-    ]);
+    const dataText = await fetchCSV(DATA_URL, 'data sheet');
+    const { mapping: parsedMapping, cards } = parseDataSheet(dataText);
+    mapping  = parsedMapping;
+    allCards = cards;
 
-    const mappingRows = parseCSV(mappingText);
-    if (mappingRows.length === 0) throw new Error('Mapping sheet (Tab 2) is empty or missing headers: front_primary, front_secondary, front_tertiary, back_primary, back_secondary, back_tertiary');
-    mapping = mappingRows[0];
-
-    if (!mapping.front_primary) throw new Error('Mapping sheet must have a front_primary column with a value.');
-
-    allCards = parseCSV(dataText);
-    if (allCards.length === 0) throw new Error('No cards found in data sheet (Tab 1).');
+    if (allCards.length === 0) throw new Error('No data rows found in the sheet (row 3 and beyond are empty).');
 
     buildQueue();
 
