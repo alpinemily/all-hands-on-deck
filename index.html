@@ -4,11 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>All 汉字 Hànzì On Deck</title>
+  <link rel="icon" type="image/svg+xml" href="/all-hands-on-deck/favicon.svg" />
+  <meta property="og:title" content="All 汉字 Hànzì On Deck" />
+  <meta property="og:description" content="Spaced Repetition Mandarin Flashcards (And A Bad Pun)" />
+  <meta property="og:image" content="https://alpinemily.github.io/all-hands-on-deck/preview.svg" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://alpinemily.github.io/all-hands-on-deck/preview.svg" />
 </head>
 <body>
 
 <header>
-  <h1>All 汉字 Hànzì On Deck <span id="header-subtitle">Spaced Repetition Mandarin Flashcards (And A Bad Pun)</span></h1>
+  <h1>All 汉字 Hànzì On Deck <span id="header-subtitle">Spaced Repetition Mandarin Flashcards (And A Bad Pun) by <a href="https://alpinemily.com/me" target="_blank" rel="noopener" id="author-link">Emily Bei</a></span></h1>
   <div id="progress-bar-wrap">
     <div id="progress-text">0 / 0 cards</div>
     <div id="progress-bar"><div id="progress-fill"></div></div>
@@ -122,11 +129,22 @@
     <button id="menu-sidebar-close" aria-label="Close menu">✕</button>
   </div>
   <nav id="menu-nav">
-    <button id="menu-vocab">&#128218; All vocab words</button>
-    <a id="menu-sheet-link" href="#" target="_blank" rel="noopener">&#128196; View source spreadsheet</a>
-    <button id="menu-dark-mode">&#127769; Dark mode</button>
-    <button id="menu-script" style="display:none">&#31616; Simplified</button>
+    <button id="menu-vocab" class="menu-big-btn">&#128218; See All Vocab Words</button>
+    <div id="menu-dark-mode" class="script-toggle">
+      <button class="script-opt" data-mode="light">&#9728;&#65039; Light</button>
+      <button class="script-opt" data-mode="dark">&#127769; Dark</button>
+    </div>
+    <div id="menu-script" style="display:none" class="script-toggle">
+      <button class="script-opt" data-script="simplified">簡 Simplified</button>
+      <button class="script-opt" data-script="traditional">繁 Traditional</button>
+    </div>
+    <div id="menu-class-wrap" style="display:none">
+      <select id="menu-class-select">
+        <option value="all">All classes</option>
+      </select>
+    </div>
     <div class="menu-divider"></div>
+    <a id="menu-sheet-link" href="#" target="_blank" rel="noopener">&#128196; View source spreadsheet</a>
     <button id="menu-reset" class="menu-danger">&#128465; Reset progress</button>
   </nav>
 </aside>

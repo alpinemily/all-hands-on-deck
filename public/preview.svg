@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#f5f0eb"/>
+
+  <!-- Card shape -->
+  <rect x="340" y="115" width="520" height="340" rx="24" fill="#ffffff" filter="url(#shadow)"/>
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="18" flood-color="#00000020"/>
+    </filter>
+  </defs>
+
+  <!-- Card front content -->
+  <text x="600" y="255" font-size="90" text-anchor="middle" font-family="serif" fill="#1a1a2e">你好</text>
+  <text x="600" y="320" font-size="30" text-anchor="middle" font-family="sans-serif" fill="#6b7280" font-style="italic">nǐ hǎo</text>
+
+  <!-- Flip hint -->
+  <text x="600" y="410" font-size="17" text-anchor="middle" font-family="sans-serif" fill="#9ca3af" letter-spacing="1">CLICK TO REVEAL →</text>
+
+  <!-- Title -->
+  <text x="600" y="530" font-size="28" text-anchor="middle" font-family="sans-serif" font-weight="700" fill="#1a1a2e">All 汉字 Hànzì On Deck</text>
+  <text x="600" y="565" font-size="18" text-anchor="middle" font-family="sans-serif" fill="#6b7280">Spaced Repetition Mandarin Flashcards</text>
+</svg>

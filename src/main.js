@@ -97,6 +97,7 @@ let isFlipped      = false;
 let sessionDone    = [];
 let studyingEarly  = false;
 let useTraditional = localStorage.getItem('use_traditional') === 'true';
+let selectedClass  = localStorage.getItem('class_filter') || 'all';
 // mapping: { front_primary, front_secondary, front_tertiary, back_primary, back_secondary, back_tertiary }
 // each value is a column name from the data sheet (or empty string)
 let mapping     = {};
@@ -287,6 +288,36 @@ async function fetchCSV(url, label) {
   return resp.text();
 }
 
+function buildQueue() {
+  const candidates = allCards.filter(c => {
+    if (getSRSEntry(srs, c._id).removed) return false;
+    if (selectedClass !== 'all' && slot(c, 'front_bottom_left') !== selectedClass) return false;
+    return true;
+  });
+  const due  = candidates.filter(c => getSRSEntry(srs, c._id).repetitions > 0 && isDue(srs, c._id));
+  const newC = candidates.filter(c => getSRSEntry(srs, c._id).repetitions === 0);
+  if (due.length === 0 && newC.length === 0) {
+    shuffle(candidates);
+    queue = candidates.map(c => c._id);
+    studyingEarly = true;
+  } else {
+    shuffle(due); shuffle(newC);
+    queue = [...due, ...newC].map(c => c._id);
+    studyingEarly = false;
+  }
+  current = 0;
+}
+
+function startSession() {
+  sessionDone = [];
+  isFlipped = false;
+  completeScreen.classList.remove('visible');
+  cardArea.querySelector('.scene').style.display = '';
+  deckInfo.style.display = '';
+  buildQueue();
+  renderCard();
+}
+
 async function init() {
   srs = loadSRS();
   try {
@@ -304,36 +335,52 @@ async function init() {
     allCards = parseCSV(dataText);
     if (allCards.length === 0) throw new Error('No cards found in data sheet (Tab 1).');
 
-    const active = allCards.filter(c => !getSRSEntry(srs, c._id).removed);
-    const due  = active.filter(c => getSRSEntry(srs, c._id).repetitions > 0 && isDue(srs, c._id));
-    const newC = active.filter(c => getSRSEntry(srs, c._id).repetitions === 0);
+    buildQueue();
 
-    if (due.length === 0 && newC.length === 0) {
-      // All cards are reviewed and not yet due — let the user study anyway
-      shuffle(active);
-      queue = active.map(c => c._id);
-      studyingEarly = true;
-    } else {
-      shuffle(due); shuffle(newC);
-      queue = [...due, ...newC].map(c => c._id);
-      studyingEarly = false;
+    // Class filter dropdown
+    const classValues = [...new Set(allCards.map(c => slot(c, 'front_bottom_left')).filter(Boolean))]
+      .sort((a, b) => Number(a) - Number(b) || a.localeCompare(b));
+    if (classValues.length > 0) {
+      const classWrap   = document.getElementById('menu-class-wrap');
+      const classSelect = document.getElementById('menu-class-select');
+      classValues.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = `Class ${v}`;
+        classSelect.appendChild(opt);
+      });
+      classSelect.value = selectedClass !== 'all' && classValues.includes(selectedClass) ? selectedClass : 'all';
+      classWrap.style.display = '';
+      classSelect.addEventListener('change', () => {
+        selectedClass = classSelect.value;
+        localStorage.setItem('class_filter', selectedClass);
+        startSession();
+        closeMenu();
+      });
     }
 
-    if (mapping.back_primary_traditional) {
-      const scriptBtn = document.getElementById('menu-script');
-      scriptBtn.style.display = '';
-      scriptBtn.textContent   = useTraditional ? '繁 Traditional' : '簡 Simplified';
-      scriptBtn.addEventListener('click', () => {
-        useTraditional = !useTraditional;
-        localStorage.setItem('use_traditional', useTraditional);
-        scriptBtn.textContent = useTraditional ? '繁 Traditional' : '簡 Simplified';
-        renderCard();
+    const derivedTraditionalCol = mapping.back_primary?.replace('simplified', 'traditional');
+    if (derivedTraditionalCol && derivedTraditionalCol !== mapping.back_primary && allCards[0]?.[derivedTraditionalCol] !== undefined) {
+      mapping.back_primary_traditional = derivedTraditionalCol;
+      const scriptWrap = document.getElementById('menu-script');
+      scriptWrap.style.display = 'flex';
+      const scriptOpts = scriptWrap.querySelectorAll('.script-opt');
+      const updateScriptUI = () => scriptOpts.forEach(btn =>
+        btn.classList.toggle('active', (btn.dataset.script === 'traditional') === useTraditional)
+      );
+      updateScriptUI();
+      scriptOpts.forEach(btn => {
+        btn.addEventListener('click', () => {
+          useTraditional = btn.dataset.script === 'traditional';
+          localStorage.setItem('use_traditional', useTraditional);
+          updateScriptUI();
+          renderCard();
+        });
       });
     }
 
     loadingEl.style.display = 'none';
     cardArea.style.display  = 'flex';
-    current = 0;
     renderCard();
   } catch (err) {
     showError(err.message);
@@ -412,9 +459,7 @@ function buildVocabTable() {
   document.getElementById('vocab-count').textContent = `(${rows.length})`;
 
   document.getElementById('vocab-body').innerHTML = rows.map(({ card, totalReviews, totalCorrect, pct, removed, starred }) => {
-    const rowBg = removed      ? ''
-                : pct === null ? 'background:#f9fafb'
-                               : `background:${spectrumColor(pct)}18`;
+    const rowBg = '';
 
     const pctCell    = pct === null
       ? `<td><span class="pct-badge-new">New</span></td>`
@@ -508,17 +553,19 @@ document.addEventListener('keydown', e => {
 
 // ── Dark mode ─────────────────────────────────────────────────────────────────
 const DARK_KEY = 'dark_mode';
-const darkBtn  = document.getElementById('menu-dark-mode');
+const darkOpts = document.querySelectorAll('#menu-dark-mode .script-opt');
 
 function applyDark(on) {
   document.documentElement.classList.toggle('dark', on);
-  darkBtn.innerHTML = on ? '&#9728;&#65039; Light mode' : '&#127769; Dark mode';
+  darkOpts.forEach(btn => btn.classList.toggle('active', (btn.dataset.mode === 'dark') === on));
 }
 
-darkBtn.addEventListener('click', () => {
-  const next = !document.documentElement.classList.contains('dark');
-  localStorage.setItem(DARK_KEY, next);
-  applyDark(next);
+darkOpts.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const isDark = btn.dataset.mode === 'dark';
+    localStorage.setItem(DARK_KEY, isDark);
+    applyDark(isDark);
+  });
 });
 
 applyDark(localStorage.getItem(DARK_KEY) === 'true');
