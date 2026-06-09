@@ -3,6 +3,8 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: '0 14 * * *'  # daily at 6am PST (UTC-8)
 
 permissions:
   contents: read

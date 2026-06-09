@@ -456,5 +456,22 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Delete' || e.key === 'Backspace') removeCard();
 });
 
+// ── Dark mode ─────────────────────────────────────────────────────────────────
+const DARK_KEY = 'dark_mode';
+const darkBtn  = document.getElementById('menu-dark-mode');
+
+function applyDark(on) {
+  document.documentElement.classList.toggle('dark', on);
+  darkBtn.innerHTML = on ? '&#9728;&#65039; Light mode' : '&#127769; Dark mode';
+}
+
+darkBtn.addEventListener('click', () => {
+  const next = !document.documentElement.classList.contains('dark');
+  localStorage.setItem(DARK_KEY, next);
+  applyDark(next);
+});
+
+applyDark(localStorage.getItem(DARK_KEY) === 'true');
+
 // ── Start ─────────────────────────────────────────────────────────────────────
 init();
