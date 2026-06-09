@@ -530,7 +530,17 @@ document.getElementById('menu-reset').addEventListener('click', () => {
 });
 
 // ── Event listeners ───────────────────────────────────────────────────────────
-document.getElementById('card-scene').addEventListener('click', flipCard);
+let mouseDownX = 0, mouseDownY = 0;
+document.getElementById('card-scene').addEventListener('mousedown', e => {
+  mouseDownX = e.clientX;
+  mouseDownY = e.clientY;
+});
+document.getElementById('card-scene').addEventListener('click', e => {
+  const dx = e.clientX - mouseDownX;
+  const dy = e.clientY - mouseDownY;
+  if (Math.sqrt(dx * dx + dy * dy) > 5) return;
+  flipCard();
+});
 btnGot.addEventListener('click',    () => answer(true));
 btnForgot.addEventListener('click', () => answer(false));
 starFront.addEventListener('click',   e => { e.stopPropagation(); toggleStar(); });
