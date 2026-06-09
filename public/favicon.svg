@@ -12,5 +12,5 @@
   <!-- leaf -->
   <ellipse cx="37" cy="8" rx="6" ry="3" fill="#6AAF00" transform="rotate(-30 37 8)"/>
   <!-- han character -->
-  <text x="32" y="51" font-size="36" text-anchor="middle" font-family="serif" fill="#fff" font-weight="bold">汉</text>
+  <text x="32" y="47" font-size="36" text-anchor="middle" font-family="serif" fill="#fff" font-weight="bold">汉</text>
 </svg>
