@@ -473,7 +473,10 @@ document.getElementById('vocab-body').addEventListener('click', e => {
   buildVocabTable();
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeVocabModal();
+  if (e.key === 'Escape') {
+    closeVocabModal();
+    sheetHelpOverlay.classList.remove('open');
+  }
 });
 
 // ── Menu sidebar ─────────────────────────────────────────────────────────────
@@ -483,6 +486,8 @@ const menuBackdrop = document.getElementById('menu-backdrop');
 
 function openMenu()  { menuSidebar.classList.add('open');  menuBackdrop.classList.add('open');  }
 function closeMenu() { menuSidebar.classList.remove('open'); menuBackdrop.classList.remove('open'); }
+
+requestAnimationFrame(() => menuSidebar.classList.add('loaded'));
 
 menuBtn.addEventListener('click', openMenu);
 menuBackdrop.addEventListener('click', closeMenu);
@@ -500,6 +505,33 @@ document.getElementById('menu-reset').addEventListener('click', () => {
     localStorage.removeItem(STORAGE_KEY);
     location.reload();
   }
+});
+
+// ── Sheet setup dialog ───────────────────────────────────────────────────────
+const sheetHelpOverlay = document.getElementById('sheet-help-overlay');
+document.getElementById('menu-sheet-help').addEventListener('click', e => { e.preventDefault(); sheetHelpOverlay.classList.add('open'); });
+document.getElementById('sheet-help-close').addEventListener('click', () => sheetHelpOverlay.classList.remove('open'));
+sheetHelpOverlay.addEventListener('click', e => { if (e.target === sheetHelpOverlay) sheetHelpOverlay.classList.remove('open'); });
+
+// ── Custom sheet loader ───────────────────────────────────────────────────────
+const sheetInput = document.getElementById('menu-sheet-input');
+const sheetError = document.getElementById('menu-sheet-error');
+
+const currentCustomSheet = new URLSearchParams(window.location.search).get('sheet');
+if (currentCustomSheet) sheetInput.value = currentCustomSheet;
+
+document.getElementById('menu-sheet-load').addEventListener('click', () => {
+  const raw  = sheetInput.value.trim();
+  const base = raw.split('?')[0].replace(/pubhtml$/, 'pub');
+  if (!raw) { sheetError.textContent = ''; return; }
+  if (!base.includes('docs.google.com/spreadsheets') || !base.endsWith('/pub')) {
+    sheetError.textContent = 'Paste a published Google Sheets CSV URL (File → Share → Publish to web → CSV).';
+    return;
+  }
+  sheetError.textContent = '';
+  const params = new URLSearchParams(window.location.search);
+  params.set('sheet', base);
+  window.location.search = params.toString();
 });
 
 // ── Event listeners ───────────────────────────────────────────────────────────

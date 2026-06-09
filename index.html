@@ -101,8 +101,7 @@
   <span><kbd id="kbd-got"></kbd> Got it</span>
   <span><kbd id="kbd-forgot"></kbd> Forgot it</span>
   <span><kbd id="kbd-star"></kbd> Star</span>
-  <span><kbd>Delete</kbd> Remove word</span>
-  <span><kbd>Return</kbd> Study again</span>
+  <span><kbd>Del</kbd> Remove word</span>
 </footer>
 
 <!-- ── Vocab modal ── -->
@@ -117,6 +116,41 @@
         <thead><tr></tr></thead>
         <tbody id="vocab-body"></tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+<!-- ── Sheet setup dialog ── -->
+<div id="sheet-help-overlay">
+  <div id="sheet-help-dialog">
+    <div id="sheet-help-header">
+      <h2>How to set up your sheet</h2>
+      <button id="sheet-help-close" aria-label="Close">✕</button>
+    </div>
+    <div id="sheet-help-body">
+      <p><strong>Step 1 — Format your spreadsheet</strong></p>
+      <ul>
+        <li><strong>Row 1:</strong> Your column names (e.g. <em>english, mandarin, pinyin</em>)</li>
+        <li><strong>Row 2:</strong> Slot names — assign each column a role from the list below. Leave blank to skip.</li>
+        <li><strong>Row 3+:</strong> Your card data</li>
+      </ul>
+      <p><strong>Available slots</strong></p>
+      <ul>
+        <li><code>front_primary</code> — main text on the card front</li>
+        <li><code>front_secondary</code> — smaller text on the front</li>
+        <li><code>front_tertiary</code> — additional text on the front</li>
+        <li><code>front_bottom_left</code> — bottom-left label (e.g. lesson number)</li>
+        <li><code>back_primary</code> — main answer on the card back</li>
+        <li><code>back_secondary</code> — secondary answer text</li>
+        <li><code>back_tertiary</code> — additional answer text</li>
+      </ul>
+      <p><strong>Step 2 — Publish as CSV</strong></p>
+      <ol>
+        <li>File → Share → Publish to web</li>
+        <li>Select your tab → choose <em>CSV</em> format</li>
+        <li>Click Publish and copy the link</li>
+        <li>Paste it into the field in the menu</li>
+      </ol>
     </div>
   </div>
 </div>
@@ -142,6 +176,14 @@
       <select id="menu-class-select">
         <option value="all">All classes</option>
       </select>
+    </div>
+    <div class="menu-divider"></div>
+    <div id="menu-custom-sheet">
+      <label for="menu-sheet-input">Use your own sheet</label>
+      <a id="menu-sheet-help" href="#">How to set up ↗</a>
+      <input id="menu-sheet-input" type="url" placeholder="Paste published Google Sheets URL…" spellcheck="false" />
+      <button id="menu-sheet-load" class="menu-big-btn">Load sheet</button>
+      <p id="menu-sheet-error"></p>
     </div>
     <div class="menu-divider"></div>
     <a id="menu-sheet-link" href="#" target="_blank" rel="noopener">&#128196; View source spreadsheet</a>
