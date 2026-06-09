@@ -102,10 +102,11 @@ let mapping     = {};
 
 // ── DOM refs ─────────────────────────────────────────────────────────────────
 const cardEl        = document.getElementById('card');
-const frontPrimary  = document.getElementById('front-primary');
-const frontSecond   = document.getElementById('front-secondary');
-const frontTertiary = document.getElementById('front-tertiary');
-const frontStat     = document.getElementById('front-stat');
+const frontPrimary     = document.getElementById('front-primary');
+const frontSecond      = document.getElementById('front-secondary');
+const frontTertiary    = document.getElementById('front-tertiary');
+const frontBottomLeft  = document.getElementById('front-bottom-left');
+const frontStat        = document.getElementById('front-stat');
 const starFront     = document.getElementById('star-front');
 const starBack      = document.getElementById('star-back');
 const removeFront   = document.getElementById('remove-front');
@@ -138,9 +139,10 @@ function renderCard() {
   cardEl.classList.remove('flipped');
   actionBtns.classList.remove('visible');
 
-  frontPrimary.textContent  = slot(card, 'front_primary');
-  frontSecond.textContent   = slot(card, 'front_secondary');
-  frontTertiary.textContent = slot(card, 'front_tertiary');
+  frontPrimary.textContent    = slot(card, 'front_primary');
+  frontSecond.textContent     = slot(card, 'front_secondary');
+  frontTertiary.textContent   = slot(card, 'front_tertiary');
+  frontBottomLeft.textContent = slot(card, 'front_bottom_left');
 
   const entry = getSRSEntry(srs, card._id);
   const { totalReviews = 0, totalCorrect = 0, starred = false } = entry;
@@ -339,8 +341,9 @@ function vocabCols() {
   return [
     { key: 'starred',       label: '★' },
     { key: 'front_primary', label: mapping.front_primary  || 'Word' },
-    mapping.front_secondary ? { key: 'front_secondary', label: mapping.front_secondary } : null,
-    mapping.front_tertiary  ? { key: 'front_tertiary',  label: mapping.front_tertiary  } : null,
+    mapping.front_secondary   ? { key: 'front_secondary',   label: mapping.front_secondary   } : null,
+    mapping.front_tertiary    ? { key: 'front_tertiary',    label: mapping.front_tertiary    } : null,
+    mapping.front_bottom_left ? { key: 'front_bottom_left', label: mapping.front_bottom_left } : null,
     { key: 'back_primary',  label: mapping.back_primary   || 'Answer' },
     mapping.back_secondary  ? { key: 'back_secondary',  label: mapping.back_secondary  } : null,
     mapping.back_tertiary   ? { key: 'back_tertiary',   label: mapping.back_tertiary   } : null,

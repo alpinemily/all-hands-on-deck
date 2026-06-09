@@ -326,6 +326,14 @@ main {
 .star-btn:hover  { color: #f59e0b; transform: scale(1.2); }
 .star-btn.starred { color: #f59e0b; }
 
+.card__front-bottom-left {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
 .card__stat {
   position: absolute;
   bottom: 1rem;
