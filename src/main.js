@@ -93,9 +93,10 @@ let allCards    = [];
 let queue       = [];
 let current     = 0;
 let srs         = {};
-let isFlipped     = false;
-let sessionDone   = [];
-let studyingEarly = false;
+let isFlipped      = false;
+let sessionDone    = [];
+let studyingEarly  = false;
+let useTraditional = localStorage.getItem('use_traditional') === 'true';
 // mapping: { front_primary, front_secondary, front_tertiary, back_primary, back_secondary, back_tertiary }
 // each value is a column name from the data sheet (or empty string)
 let mapping     = {};
@@ -142,7 +143,8 @@ function renderCard() {
   frontPrimary.textContent    = slot(card, 'front_primary');
   frontSecond.textContent     = slot(card, 'front_secondary');
   frontTertiary.textContent   = slot(card, 'front_tertiary');
-  frontBottomLeft.textContent = slot(card, 'front_bottom_left');
+  const bottomLeft = slot(card, 'front_bottom_left');
+  frontBottomLeft.textContent = bottomLeft ? `class ${bottomLeft}` : '';
 
   const entry = getSRSEntry(srs, card._id);
   const { totalReviews = 0, totalCorrect = 0, starred = false } = entry;
@@ -150,7 +152,7 @@ function renderCard() {
   frontStat.className = `card__stat ${statColor(totalReviews, totalCorrect)}`;
   setStarUI(starred);
 
-  backPrimary.textContent  = slot(card, 'back_primary');
+  backPrimary.textContent  = slot(card, useTraditional && mapping.back_primary_traditional ? 'back_primary_traditional' : 'back_primary');
   backSecond.textContent   = slot(card, 'back_secondary');
   backTertiary.textContent = slot(card, 'back_tertiary');
 
@@ -315,6 +317,18 @@ async function init() {
       shuffle(due); shuffle(newC);
       queue = [...due, ...newC].map(c => c._id);
       studyingEarly = false;
+    }
+
+    if (mapping.back_primary_traditional) {
+      const scriptBtn = document.getElementById('menu-script');
+      scriptBtn.style.display = '';
+      scriptBtn.textContent   = useTraditional ? '繁 Traditional' : '簡 Simplified';
+      scriptBtn.addEventListener('click', () => {
+        useTraditional = !useTraditional;
+        localStorage.setItem('use_traditional', useTraditional);
+        scriptBtn.textContent = useTraditional ? '繁 Traditional' : '簡 Simplified';
+        renderCard();
+      });
     }
 
     loadingEl.style.display = 'none';
