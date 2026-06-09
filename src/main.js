@@ -545,8 +545,8 @@ document.addEventListener('keydown', e => {
     return;
   }
   if (e.key === ' ')                               { e.preventDefault(); flipCard(); }
-  if (e.key === 'c' || e.key === 'C')              answer(true);
-  if (e.key === 'x' || e.key === 'X')              answer(false);
+  if (e.key === 'g' || e.key === 'G')              answer(true);
+  if (e.key === 'f' || e.key === 'F')              answer(false);
   if (e.key === 's' || e.key === 'S')              toggleStar();
   if (e.key === 'Delete' || e.key === 'Backspace') removeCard();
 });
