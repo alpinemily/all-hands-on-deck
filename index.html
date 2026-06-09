@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mandarin Flashcards</title>
+</head>
+<body>
+
+<header>
+  <h1>Mandarin Flashcards</h1>
+  <div id="progress-bar-wrap">
+    <div id="progress-text">0 / 0 cards</div>
+    <div id="progress-bar"><div id="progress-fill"></div></div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ── Card area ── -->
+  <section id="card-area" style="display:none; flex-direction:column; align-items:center; justify-content:center; flex:1;">
+
+    <div id="deck-info"></div>
+
+    <div class="scene" id="card-scene">
+      <div class="card" id="card">
+
+        <!-- Front -->
+        <div class="card__face card__face--front">
+          <span class="card__hint">Click to reveal →</span>
+          <button class="star-btn" id="star-front" aria-label="Star card">☆</button>
+          <div class="card__front-primary"   id="front-primary"></div>
+          <div class="card__front-secondary" id="front-secondary"></div>
+          <div class="card__front-tertiary"  id="front-tertiary"></div>
+          <div class="card__stat"            id="front-stat"></div>
+        </div>
+
+        <!-- Back -->
+        <div class="card__face card__face--back">
+          <span class="card__hint">↑ Click to flip back</span>
+          <button class="star-btn" id="star-back" aria-label="Star card">☆</button>
+          <div class="card__back-primary"   id="back-primary"></div>
+          <div class="card__back-secondary" id="back-secondary"></div>
+          <div class="card__back-tertiary"  id="back-tertiary"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Got it / Forgot it -->
+    <div id="action-btns">
+      <button class="btn-action" id="btn-forgot">✗ Forgot it</button>
+      <button class="btn-action" id="btn-got">✓ Got it</button>
+    </div>
+
+    <!-- Session complete -->
+    <div id="complete-screen">
+      <div style="font-size:3rem">🎉</div>
+      <h2>Session complete!</h2>
+      <p>
+        <strong id="complete-got">0</strong> got it &nbsp;·&nbsp;
+        <strong id="complete-forgot">0</strong> to review again
+      </p>
+      <p style="font-size:0.85rem; color:#6b7280; max-width:320px;">
+        Cards you answered correctly will come back later based on spaced repetition.
+        Cards you forgot will appear next session.
+      </p>
+      <button class="btn-primary" id="btn-restart" style="margin-top:0.5rem">Study again</button>
+    </div>
+
+  </section>
+
+  <!-- ── Loading ── -->
+  <div id="loading" style="flex:1; flex-direction:column; align-items:center; justify-content:center; display:flex;">
+    <div class="spinner"></div>
+    <p>Loading cards…</p>
+  </div>
+
+  <!-- ── Sidebar: done list ── -->
+  <aside id="sidebar">
+    <h2>Reviewed</h2>
+    <div id="done-list"></div>
+  </aside>
+
+</main>
+
+
+<footer id="shortcuts">
+  <span><kbd>Space</kbd><kbd>Enter</kbd> Flip card</span>
+  <span><kbd>←</kbd> Forgot it</span>
+  <span><kbd>→</kbd> Got it</span>
+  <span><kbd>S</kbd> Star</span>
+</footer>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
