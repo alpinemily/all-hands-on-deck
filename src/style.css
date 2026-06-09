@@ -562,6 +562,10 @@ main {
 .btn-primary:hover { background: var(--accent-hover); }
 
 /* ── Keyboard shortcuts footer ── */
+@media (pointer: coarse) {
+  #shortcuts { display: none; }
+}
+
 #shortcuts {
   display: flex;
   justify-content: center;
@@ -716,7 +720,7 @@ th.th-active .sort-arrow { opacity: 1; }
 tr.row-removed { opacity: 0.5; }
 
 /* ── Responsive ── */
-@media (max-width: 700px) {
+@media (max-width: 1120px) {
   main { padding: 1rem; }
   #card-area { min-height: unset; padding-bottom: 1rem; }
   #sidebar { position: static; width: 100%; margin-top: 1rem; }

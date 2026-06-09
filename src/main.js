@@ -8,7 +8,15 @@ const DATA_URL    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQQa2dOfKbH
 const MAPPING_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQQa2dOfKbHmAWG7_6KSNFdtsXFlwB4YnyAsi4FaUsEH365UAgzeeXadZnjCSv7uSB9hHAVc6y4iRi2/pub?output=csv&gid=1825057245';
 const SHEET_LINK  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQQa2dOfKbHmAWG7_6KSNFdtsXFlwB4YnyAsi4FaUsEH365UAgzeeXadZnjCSv7uSB9hHAVc6y4iRi2/pubhtml';
 
-const STORAGE_KEY = 'flashcard_srs_data';
+const STORAGE_KEY    = 'flashcard_srs_data';
+const TRAD_KEY       = 'use_traditional';
+const CLASS_KEY      = 'class_filter';
+
+const KEY_GOT    = 'g';
+const KEY_FORGOT = 'f';
+const KEY_STAR   = 's';
+
+const DRAG_THRESHOLD = 5;
 
 // ── SM-2 spaced repetition ──────────────────────────────────────────────────
 function loadSRS() {
@@ -96,8 +104,8 @@ let srs         = {};
 let isFlipped      = false;
 let sessionDone    = [];
 let studyingEarly  = false;
-let useTraditional = localStorage.getItem('use_traditional') === 'true';
-let selectedClass  = localStorage.getItem('class_filter') || 'all';
+let useTraditional = localStorage.getItem(TRAD_KEY) === 'true';
+let selectedClass  = localStorage.getItem(CLASS_KEY) || 'all';
 // mapping: { front_primary, front_secondary, front_tertiary, back_primary, back_secondary, back_tertiary }
 // each value is a column name from the data sheet (or empty string)
 let mapping     = {};
@@ -353,7 +361,7 @@ async function init() {
       classWrap.style.display = '';
       classSelect.addEventListener('change', () => {
         selectedClass = classSelect.value;
-        localStorage.setItem('class_filter', selectedClass);
+        localStorage.setItem(CLASS_KEY, selectedClass);
         startSession();
         closeMenu();
       });
@@ -372,7 +380,7 @@ async function init() {
       scriptOpts.forEach(btn => {
         btn.addEventListener('click', () => {
           useTraditional = btn.dataset.script === 'traditional';
-          localStorage.setItem('use_traditional', useTraditional);
+          localStorage.setItem(TRAD_KEY, useTraditional);
           updateScriptUI();
           renderCard();
         });
@@ -538,7 +546,7 @@ document.getElementById('card-scene').addEventListener('mousedown', e => {
 document.getElementById('card-scene').addEventListener('click', e => {
   const dx = e.clientX - mouseDownX;
   const dy = e.clientY - mouseDownY;
-  if (Math.sqrt(dx * dx + dy * dy) > 5) return;
+  if (Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) return;
   flipCard();
 });
 btnGot.addEventListener('click',    () => answer(true));
@@ -555,9 +563,9 @@ document.addEventListener('keydown', e => {
     return;
   }
   if (e.key === ' ')                               { e.preventDefault(); flipCard(); }
-  if (e.key === 'g' || e.key === 'G')              answer(true);
-  if (e.key === 'f' || e.key === 'F')              answer(false);
-  if (e.key === 's' || e.key === 'S')              toggleStar();
+  if (e.key === KEY_GOT    || e.key === KEY_GOT.toUpperCase())    answer(true);
+  if (e.key === KEY_FORGOT || e.key === KEY_FORGOT.toUpperCase()) answer(false);
+  if (e.key === KEY_STAR   || e.key === KEY_STAR.toUpperCase())   toggleStar();
   if (e.key === 'Delete' || e.key === 'Backspace') removeCard();
 });
 
@@ -581,4 +589,8 @@ darkOpts.forEach(btn => {
 applyDark(localStorage.getItem(DARK_KEY) === 'true');
 
 // ── Start ─────────────────────────────────────────────────────────────────────
+document.getElementById('kbd-got').textContent    = KEY_GOT.toUpperCase();
+document.getElementById('kbd-forgot').textContent = KEY_FORGOT.toUpperCase();
+document.getElementById('kbd-star').textContent   = KEY_STAR.toUpperCase();
+
 init();
