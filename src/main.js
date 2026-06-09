@@ -6,6 +6,7 @@ import './style.css'
 // To find a tab's gid: click the tab in Google Sheets and look at the URL: #gid=XXXXXXX
 const DATA_URL    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQQa2dOfKbHmAWG7_6KSNFdtsXFlwB4YnyAsi4FaUsEH365UAgzeeXadZnjCSv7uSB9hHAVc6y4iRi2/pub?output=csv&gid=0';
 const MAPPING_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQQa2dOfKbHmAWG7_6KSNFdtsXFlwB4YnyAsi4FaUsEH365UAgzeeXadZnjCSv7uSB9hHAVc6y4iRi2/pub?output=csv&gid=1825057245';
+const SHEET_LINK  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQQa2dOfKbHmAWG7_6KSNFdtsXFlwB4YnyAsi4FaUsEH365UAgzeeXadZnjCSv7uSB9hHAVc6y4iRi2/pubhtml';
 
 const STORAGE_KEY = 'flashcard_srs_data';
 
@@ -92,8 +93,9 @@ let allCards    = [];
 let queue       = [];
 let current     = 0;
 let srs         = {};
-let isFlipped   = false;
-let sessionDone = [];
+let isFlipped     = false;
+let sessionDone   = [];
+let studyingEarly = false;
 // mapping: { front_primary, front_secondary, front_tertiary, back_primary, back_secondary, back_tertiary }
 // each value is a column name from the data sheet (or empty string)
 let mapping     = {};
@@ -106,6 +108,8 @@ const frontTertiary = document.getElementById('front-tertiary');
 const frontStat     = document.getElementById('front-stat');
 const starFront     = document.getElementById('star-front');
 const starBack      = document.getElementById('star-back');
+const removeFront   = document.getElementById('remove-front');
+const removeBack    = document.getElementById('remove-back');
 const backPrimary   = document.getElementById('back-primary');
 const backSecond    = document.getElementById('back-secondary');
 const backTertiary  = document.getElementById('back-tertiary');
@@ -152,7 +156,9 @@ function renderCard() {
   const total = queue.length + done;
   progressFill.style.width = `${(done / total) * 100}%`;
   progressText.textContent = `${done} / ${total} cards`;
-  deckInfo.textContent     = `Card ${current + 1} of ${queue.length} remaining`;
+  deckInfo.textContent     = studyingEarly
+    ? `Card ${current + 1} of ${queue.length} — all caught up, reviewing early`
+    : `Card ${current + 1} of ${queue.length} remaining`;
 }
 
 function flipCard() {
@@ -165,10 +171,15 @@ function flipCard() {
 function addToDoneList(card, gotIt) {
   const item = document.createElement('div');
   item.className = 'done-item';
+  const backPri = slot(card, 'back_primary');
+  const backSec = slot(card, 'back_secondary');
   item.innerHTML = `
     <span class="done-item__status ${gotIt ? 'got' : 'forgot'}"></span>
     <span class="done-item__primary">${slot(card, 'front_primary')}</span>
-    <span class="done-item__secondary">${slot(card, 'back_primary')}</span>
+    <span class="done-item__back">
+      <span class="done-item__back-primary">${backPri}</span>
+      ${backSec ? `<span class="done-item__back-secondary">${backSec}</span>` : ''}
+    </span>
   `;
   doneList.prepend(item);
 }
@@ -203,6 +214,19 @@ function setStarUI(starred) {
   starBack.textContent  = symbol;
   starFront.classList.toggle('starred', starred);
   starBack.classList.toggle('starred', starred);
+}
+
+function removeCard() {
+  if (queue.length === 0) return;
+  const card  = allCards[queue[current]];
+  const entry = getSRSEntry(srs, card._id);
+  entry.removed = true;
+  srs[card._id] = entry;
+  saveSRS(srs);
+
+  queue.splice(current, 1);
+  if (current >= queue.length && current > 0) current--;
+  renderCard();
 }
 
 function toggleStar() {
@@ -253,10 +277,20 @@ async function init() {
     allCards = parseCSV(dataText);
     if (allCards.length === 0) throw new Error('No cards found in data sheet (Tab 1).');
 
-    const due  = allCards.filter(c => getSRSEntry(srs, c._id).repetitions > 0 && isDue(srs, c._id));
-    const newC = allCards.filter(c => getSRSEntry(srs, c._id).repetitions === 0);
-    shuffle(due); shuffle(newC);
-    queue = [...due, ...newC].map(c => c._id);
+    const active = allCards.filter(c => !getSRSEntry(srs, c._id).removed);
+    const due  = active.filter(c => getSRSEntry(srs, c._id).repetitions > 0 && isDue(srs, c._id));
+    const newC = active.filter(c => getSRSEntry(srs, c._id).repetitions === 0);
+
+    if (due.length === 0 && newC.length === 0) {
+      // All cards are reviewed and not yet due — let the user study anyway
+      shuffle(active);
+      queue = active.map(c => c._id);
+      studyingEarly = true;
+    } else {
+      shuffle(due); shuffle(newC);
+      queue = [...due, ...newC].map(c => c._id);
+      studyingEarly = false;
+    }
 
     loadingEl.style.display = 'none';
     cardArea.style.display  = 'flex';
@@ -267,19 +301,159 @@ async function init() {
   }
 }
 
+// ── Vocab table ──────────────────────────────────────────────────────────────
+let vocabSortCol = 'pct';
+let vocabSortDir = 'asc';
+
+// Interpolate red→yellow→green across 0–1
+function spectrumColor(pct) {
+  const r = pct < 0.5 ? 220 : Math.round(220 - (pct - 0.5) * 2 * 180);
+  const g = pct < 0.5 ? Math.round(pct * 2 * 200) : 200;
+  return `rgb(${r},${g},60)`;
+}
+
+function vocabCols() {
+  return [
+    { key: 'starred',       label: '★' },
+    { key: 'front_primary', label: mapping.front_primary  || 'Word' },
+    mapping.front_secondary ? { key: 'front_secondary', label: mapping.front_secondary } : null,
+    mapping.front_tertiary  ? { key: 'front_tertiary',  label: mapping.front_tertiary  } : null,
+    { key: 'back_primary',  label: mapping.back_primary   || 'Answer' },
+    mapping.back_secondary  ? { key: 'back_secondary',  label: mapping.back_secondary  } : null,
+    mapping.back_tertiary   ? { key: 'back_tertiary',   label: mapping.back_tertiary   } : null,
+    { key: 'reviews', label: 'Reviews' },
+    { key: 'pct',     label: '% Correct' },
+  ].filter(Boolean);
+}
+
+function buildVocabTable() {
+  const cols = vocabCols();
+
+  // Header
+  const headRow = document.querySelector('#vocab-table thead tr');
+  headRow.innerHTML = cols.map(c => {
+    const active = vocabSortCol === c.key;
+    const arrow  = active ? (vocabSortDir === 'asc' ? ' ↑' : ' ↓') : ' ↕';
+    return `<th data-col="${c.key}" class="${active ? 'th-active' : ''}">${c.label}<span class="sort-arrow">${arrow}</span></th>`;
+  }).join('');
+  headRow.querySelectorAll('th').forEach(th => {
+    th.addEventListener('click', () => {
+      if (vocabSortCol === th.dataset.col) vocabSortDir = vocabSortDir === 'asc' ? 'desc' : 'asc';
+      else { vocabSortCol = th.dataset.col; vocabSortDir = 'asc'; }
+      buildVocabTable();
+    });
+  });
+
+  // Rows
+  const rows = allCards.map(card => {
+    const e = getSRSEntry(srs, card._id);
+    const totalReviews = e.totalReviews || 0;
+    const totalCorrect = e.totalCorrect || 0;
+    const pct          = totalReviews ? totalCorrect / totalReviews : null;
+    return { card, totalReviews, totalCorrect, pct, removed: !!e.removed, starred: !!e.starred };
+  });
+
+  rows.sort((a, b) => {
+    const dir = vocabSortDir === 'asc' ? 1 : -1;
+    if (vocabSortCol === 'pct') {
+      // unseen (null) always below seen words regardless of direction
+      if (a.pct === null && b.pct === null) return 0;
+      if (a.pct === null) return 1;
+      if (b.pct === null) return -1;
+      return (a.pct - b.pct) * dir;
+    }
+    if (vocabSortCol === 'reviews') return (a.totalReviews - b.totalReviews) * dir;
+    if (vocabSortCol === 'starred') return ((b.starred ? 1 : 0) - (a.starred ? 1 : 0)) * dir;
+    const av = slot(a.card, vocabSortCol) || '';
+    const bv = slot(b.card, vocabSortCol) || '';
+    return av.localeCompare(bv, undefined, { sensitivity: 'base' }) * dir;
+  });
+
+  document.getElementById('vocab-count').textContent = `(${rows.length})`;
+
+  document.getElementById('vocab-body').innerHTML = rows.map(({ card, totalReviews, totalCorrect, pct, removed, starred }) => {
+    const rowBg = removed      ? ''
+                : pct === null ? 'background:#f9fafb'
+                               : `background:${spectrumColor(pct)}18`;
+
+    const pctCell    = pct === null
+      ? `<td><span class="pct-badge-new">New</span></td>`
+      : `<td><span class="pct-badge" style="background:${spectrumColor(pct)}">${Math.round(pct * 100)}%</span></td>`;
+    const reviewCell = `<td class="cell-muted">${totalReviews ? `${totalCorrect}/${totalReviews}` : '—'}</td>`;
+    const starCell   = `<td class="cell-star">${starred ? '★' : ''}</td>`;
+
+    const dataCells = cols
+      .filter(c => c.key !== 'pct' && c.key !== 'reviews' && c.key !== 'starred')
+      .map(c => `<td class="${removed ? 'cell-removed' : ''}">${slot(card, c.key)}</td>`)
+      .join('');
+
+    return `<tr class="${removed ? 'row-removed' : ''}" style="${rowBg}">${starCell}${dataCells}${reviewCell}${pctCell}</tr>`;
+  }).join('');
+}
+
+function openVocabModal() {
+  buildVocabTable();
+  document.getElementById('vocab-overlay').classList.add('open');
+}
+
+function closeVocabModal() {
+  document.getElementById('vocab-overlay').classList.remove('open');
+}
+
+document.getElementById('vocab-close').addEventListener('click', closeVocabModal);
+document.getElementById('vocab-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('vocab-overlay')) closeVocabModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeVocabModal();
+});
+
+// ── Menu sidebar ─────────────────────────────────────────────────────────────
+const menuBtn      = document.getElementById('menu-btn');
+const menuSidebar  = document.getElementById('menu-sidebar');
+const menuBackdrop = document.getElementById('menu-backdrop');
+
+function openMenu()  { menuSidebar.classList.add('open');  menuBackdrop.classList.add('open');  }
+function closeMenu() { menuSidebar.classList.remove('open'); menuBackdrop.classList.remove('open'); }
+
+menuBtn.addEventListener('click', openMenu);
+menuBackdrop.addEventListener('click', closeMenu);
+document.getElementById('menu-sidebar-close').addEventListener('click', closeMenu);
+
+document.getElementById('menu-sheet-link').href = SHEET_LINK;
+
+document.getElementById('menu-vocab').addEventListener('click', () => {
+  closeMenu();
+  openVocabModal();
+});
+
+document.getElementById('menu-reset').addEventListener('click', () => {
+  if (confirm('Reset all progress? This clears got it / forgot it history, stars, and removed words.')) {
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+  }
+});
+
 // ── Event listeners ───────────────────────────────────────────────────────────
 document.getElementById('card-scene').addEventListener('click', flipCard);
 btnGot.addEventListener('click',    () => answer(true));
 btnForgot.addEventListener('click', () => answer(false));
-starFront.addEventListener('click', e => { e.stopPropagation(); toggleStar(); });
-starBack.addEventListener('click',  e => { e.stopPropagation(); toggleStar(); });
+starFront.addEventListener('click',   e => { e.stopPropagation(); toggleStar(); });
+starBack.addEventListener('click',    e => { e.stopPropagation(); toggleStar(); });
+removeFront.addEventListener('click', e => { e.stopPropagation(); removeCard(); });
+removeBack.addEventListener('click',  e => { e.stopPropagation(); removeCard(); });
 document.getElementById('btn-restart').addEventListener('click', () => location.reload());
 
 document.addEventListener('keydown', e => {
-  if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipCard(); }
-  if (e.key === 'ArrowRight' || e.key === 'l') answer(true);
-  if (e.key === 'ArrowLeft'  || e.key === 'h') answer(false);
-  if (e.key === 's' || e.key === 'S') toggleStar();
+  if (e.key === 'Enter' && completeScreen.classList.contains('visible')) {
+    location.reload();
+    return;
+  }
+  if (e.key === ' ')                               { e.preventDefault(); flipCard(); }
+  if (e.key === 'c' || e.key === 'C')              answer(true);
+  if (e.key === 'x' || e.key === 'X')              answer(false);
+  if (e.key === 's' || e.key === 'S')              toggleStar();
+  if (e.key === 'Delete' || e.key === 'Backspace') removeCard();
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────────

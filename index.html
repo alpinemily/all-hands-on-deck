@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mandarin Flashcards</title>
+  <title>All 汉字 Hànzì On Deck</title>
 </head>
 <body>
 
 <header>
-  <h1>Mandarin Flashcards</h1>
+  <h1>All 汉字 Hànzì On Deck <span id="header-subtitle">Spaced Repetition Mandarin Flashcards (And A Bad Pun)</span></h1>
   <div id="progress-bar-wrap">
     <div id="progress-text">0 / 0 cards</div>
     <div id="progress-bar"><div id="progress-fill"></div></div>
   </div>
+  <button id="menu-btn" aria-label="Menu">&#9776;</button>
 </header>
 
 <main>
@@ -28,6 +29,7 @@
         <!-- Front -->
         <div class="card__face card__face--front">
           <span class="card__hint">Click to reveal →</span>
+          <button class="remove-btn" id="remove-front" aria-label="Remove card">✕</button>
           <button class="star-btn" id="star-front" aria-label="Star card">☆</button>
           <div class="card__front-primary"   id="front-primary"></div>
           <div class="card__front-secondary" id="front-secondary"></div>
@@ -38,6 +40,7 @@
         <!-- Back -->
         <div class="card__face card__face--back">
           <span class="card__hint">↑ Click to flip back</span>
+          <button class="remove-btn" id="remove-back" aria-label="Remove card">✕</button>
           <button class="star-btn" id="star-back" aria-label="Star card">☆</button>
           <div class="card__back-primary"   id="back-primary"></div>
           <div class="card__back-secondary" id="back-secondary"></div>
@@ -86,11 +89,44 @@
 
 
 <footer id="shortcuts">
-  <span><kbd>Space</kbd><kbd>Enter</kbd> Flip card</span>
-  <span><kbd>←</kbd> Forgot it</span>
-  <span><kbd>→</kbd> Got it</span>
+  <span><kbd>Space</kbd> Flip card</span>
+  <span><kbd>C</kbd> Got it</span>
+  <span><kbd>X</kbd> Forgot it</span>
   <span><kbd>S</kbd> Star</span>
+  <span><kbd>Delete</kbd> Remove word</span>
+  <span><kbd>Return</kbd> Study again</span>
 </footer>
+
+<!-- ── Vocab modal ── -->
+<div id="vocab-overlay">
+  <div id="vocab-modal">
+    <div id="vocab-modal-header">
+      <h2>All Vocabulary <span id="vocab-count"></span></h2>
+      <button id="vocab-close" aria-label="Close">✕</button>
+    </div>
+    <div id="vocab-table-wrap">
+      <table id="vocab-table">
+        <thead><tr></tr></thead>
+        <tbody id="vocab-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ── Menu sidebar ── -->
+<div id="menu-backdrop"></div>
+<aside id="menu-sidebar">
+  <div id="menu-sidebar-header">
+    <span>Menu</span>
+    <button id="menu-sidebar-close" aria-label="Close menu">✕</button>
+  </div>
+  <nav id="menu-nav">
+    <button id="menu-vocab">&#128218; All vocab words</button>
+    <a id="menu-sheet-link" href="#" target="_blank" rel="noopener">&#128196; View source spreadsheet</a>
+    <div class="menu-divider"></div>
+    <button id="menu-reset" class="menu-danger">&#128465; Reset progress</button>
+  </nav>
+</aside>
 
 <script type="module" src="/src/main.js"></script>
 </body>
