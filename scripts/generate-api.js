@@ -7,7 +7,7 @@ import { parseDataSheet } from '../src/utils.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 
-const DATA_URL = DEFAULT_SHEET_BASE + '?output=csv&gid=0';
+const DATA_URL = DEFAULT_SHEET_BASE + '?output=csv';
 
 async function main() {
   console.log('Fetching sheet...');

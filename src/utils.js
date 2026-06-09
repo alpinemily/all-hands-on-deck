@@ -16,7 +16,7 @@ export function splitCSVLine(line) {
   return result;
 }
 
-// Row 1: column headers  Row 2: slot names (front_primary, back_primary, …)  Row 3+: data
+// Row 1: column headers  Row 2: field names (front_primary, back_primary, …)  Row 3+: data
 export function parseDataSheet(text) {
   const lines = text.trim().split(/\r?\n/);
   if (lines.length < 3) throw new Error('Sheet must have column headers (row 1), slot names (row 2), and at least one data row (row 3+).');

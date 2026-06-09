@@ -7,7 +7,7 @@ import { parseDataSheet } from './utils.js'
 // To use your own sheet: File → Share → Publish to web → Tab 1 → CSV → Publish,
 // then pass the base URL (everything before the ?) as ?sheet=https://…/pub
 const _base      = new URLSearchParams(window.location.search).get('sheet') || DEFAULT_SHEET_BASE;
-const DATA_URL   = _base + '?output=csv&gid=0';
+const DATA_URL   = _base + '?output=csv';
 const SHEET_LINK = _base + 'html';
 
 const STORAGE_KEY    = 'flashcard_srs_data';
@@ -82,6 +82,33 @@ let selectedClass  = localStorage.getItem(CLASS_KEY) || 'all';
 // each value is a column name from the data sheet (or empty string)
 let mapping     = {};
 
+// ── Text fitting ─────────────────────────────────────────────────────────────
+function fitFace(faceEl, contentEl, primaryEl) {
+  primaryEl.style.fontSize = '';
+  const cs        = getComputedStyle(faceEl);
+  const available = faceEl.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  if (contentEl.offsetHeight <= available) return;
+
+  const maxPx = parseFloat(getComputedStyle(primaryEl).fontSize);
+  const minPx = 10;
+  let lo = minPx, hi = maxPx;
+  while (hi - lo > 0.5) {
+    const mid = (lo + hi) / 2;
+    primaryEl.style.fontSize = mid + 'px';
+    if (contentEl.offsetHeight <= available) lo = mid; else hi = mid;
+  }
+  primaryEl.style.fontSize = lo + 'px';
+}
+
+function fitCardText() {
+  const frontFace    = document.querySelector('.card__face--front');
+  const backFace     = document.querySelector('.card__face--back');
+  const frontContent = frontFace.querySelector('.card__content');
+  const backContent  = backFace.querySelector('.card__content');
+  fitFace(frontFace, frontContent, frontPrimary);
+  fitFace(backFace,  backContent,  backPrimary);
+}
+
 // ── DOM refs ─────────────────────────────────────────────────────────────────
 const cardEl        = document.getElementById('card');
 const frontPrimary     = document.getElementById('front-primary');
@@ -125,7 +152,7 @@ function renderCard() {
   frontSecond.textContent     = slot(card, 'front_secondary');
   frontTertiary.textContent   = slot(card, 'front_tertiary');
   const bottomLeft = slot(card, 'front_bottom_left');
-  frontBottomLeft.textContent = bottomLeft ? `class ${bottomLeft}` : '';
+  frontBottomLeft.textContent = bottomLeft || '';
 
   const entry = getSRSEntry(srs, card._id);
   const { totalReviews = 0, totalCorrect = 0, starred = false } = entry;
@@ -144,6 +171,8 @@ function renderCard() {
   deckInfo.textContent     = studyingEarly
     ? `Card ${current + 1} of ${queue.length} — all caught up, reviewing early`
     : `Card ${current + 1} of ${queue.length} remaining`;
+
+  fitCardText();
 }
 
 function flipCard() {
@@ -319,7 +348,7 @@ async function init() {
       classValues.forEach(v => {
         const opt = document.createElement('option');
         opt.value = v;
-        opt.textContent = `Class ${v}`;
+        opt.textContent = v;
         classSelect.appendChild(opt);
       });
       classSelect.value = selectedClass !== 'all' && classValues.includes(selectedClass) ? selectedClass : 'all';
@@ -332,9 +361,9 @@ async function init() {
       });
     }
 
-    const derivedTraditionalCol = mapping.back_primary?.replace('simplified', 'traditional');
-    if (derivedTraditionalCol && derivedTraditionalCol !== mapping.back_primary && allCards[0]?.[derivedTraditionalCol] !== undefined) {
-      mapping.back_primary_traditional = derivedTraditionalCol;
+    if (allCards[0]?.['mandarin_simplified'] !== undefined && allCards[0]?.['mandarin_traditional'] !== undefined) {
+      mapping.back_primary             = 'mandarin_simplified';
+      mapping.back_primary_traditional = 'mandarin_traditional';
       const scriptWrap = document.getElementById('menu-script');
       scriptWrap.style.display = 'flex';
       const scriptOpts = scriptWrap.querySelectorAll('.script-opt');

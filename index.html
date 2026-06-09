@@ -6,7 +6,7 @@
   <title>All 汉字 Hànzì On Deck</title>
   <link rel="icon" type="image/svg+xml" href="/all-hands-on-deck/favicon.svg" />
   <meta property="og:title" content="All 汉字 Hànzì On Deck" />
-  <meta property="og:description" content="Spaced Repetition Mandarin Flashcards (And A Bad Pun)" />
+  <meta property="og:description" content="Spaced Repetition Flashcards (And A Bad Pun)" />
   <meta property="og:image" content="https://alpinemily.github.io/all-hands-on-deck/preview.svg" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -15,7 +15,7 @@
 <body>
 
 <header>
-  <h1>All 汉字 Hànzì On Deck <span id="header-subtitle">Spaced Repetition Mandarin Flashcards (And A Bad Pun) by <a href="https://alpinemily.com/me" target="_blank" rel="noopener" id="author-link">Emily Bei</a></span></h1>
+  <h1>All 汉字 Hànzì On Deck <span id="header-subtitle">Spaced Repetition Flashcards (And A Bad Pun) by <a href="https://alpinemily.com/me" target="_blank" rel="noopener" id="author-link">Emily Bei</a></span></h1>
   <div id="progress-bar-wrap">
     <div id="progress-text">0 / 0 cards</div>
     <div id="progress-bar"><div id="progress-fill"></div></div>
@@ -38,9 +38,11 @@
           <span class="card__hint">Click to reveal →</span>
           <button class="remove-btn" id="remove-front" aria-label="Remove card">✕</button>
           <button class="star-btn" id="star-front" aria-label="Star card">☆</button>
-          <div class="card__front-primary"      id="front-primary"></div>
-          <div class="card__front-secondary"   id="front-secondary"></div>
-          <div class="card__front-tertiary"    id="front-tertiary"></div>
+          <div class="card__content">
+            <div class="card__front-primary"    id="front-primary"></div>
+            <div class="card__front-secondary"  id="front-secondary"></div>
+            <div class="card__front-tertiary"   id="front-tertiary"></div>
+          </div>
           <div class="card__front-bottom-left" id="front-bottom-left"></div>
           <div class="card__stat"              id="front-stat"></div>
         </div>
@@ -50,9 +52,11 @@
           <span class="card__hint">↑ Click to flip back</span>
           <button class="remove-btn" id="remove-back" aria-label="Remove card">✕</button>
           <button class="star-btn" id="star-back" aria-label="Star card">☆</button>
-          <div class="card__back-primary"   id="back-primary"></div>
-          <div class="card__back-secondary" id="back-secondary"></div>
-          <div class="card__back-tertiary"  id="back-tertiary"></div>
+          <div class="card__content">
+            <div class="card__back-primary"   id="back-primary"></div>
+            <div class="card__back-secondary" id="back-secondary"></div>
+            <div class="card__back-tertiary"  id="back-tertiary"></div>
+          </div>
         </div>
 
       </div>
@@ -131,10 +135,10 @@
       <p><strong>Step 1 — Format your spreadsheet</strong></p>
       <ul>
         <li><strong>Row 1:</strong> Your column names (e.g. <em>english, mandarin, pinyin</em>)</li>
-        <li><strong>Row 2:</strong> Slot names — assign each column a role from the list below. Leave blank to skip.</li>
+        <li><strong>Row 2:</strong> Field names — assign each column a role from the list below. Leave blank to skip.</li>
         <li><strong>Row 3+:</strong> Your card data</li>
       </ul>
-      <p><strong>Available slots</strong></p>
+      <p><strong>Available fields</strong></p>
       <ul>
         <li><code>front_primary</code> — main text on the card front</li>
         <li><code>front_secondary</code> — smaller text on the front</li>
@@ -174,7 +178,7 @@
     </div>
     <div id="menu-class-wrap" style="display:none">
       <select id="menu-class-select">
-        <option value="all">All classes</option>
+        <option value="all">All</option>
       </select>
     </div>
     <div class="menu-divider"></div>
@@ -189,6 +193,7 @@
     <a id="menu-sheet-link" href="#" target="_blank" rel="noopener">&#128196; View source spreadsheet</a>
     <button id="menu-reset" class="menu-danger">&#128465; Reset progress</button>
   </nav>
+  <p id="menu-about">This is a simple flashcard app built so that Emily could practice her Mandarin. However, you may link your own flashcards to use it as you wish ☺</p>
 </aside>
 
 <script type="module" src="/src/main.js"></script>
